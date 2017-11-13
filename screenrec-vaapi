@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# OPEN "pavucontrol", go to the "recording" tab, and under "Lavf...",
+#   select the "monitor" of your output device that the sounds under the
+#   "playback" tab are playing under; it would behoove you to set the
+#   amplitude of the audio monitor device to 100% so that you can actually
+#   record sounds as it is you hear them.
+
+#ffmpeg -f pulse -ac 2 -i default -f x11grab  -r 29.97 -s                \
+#  $(xwininfo -root | grep 'geometry' | awk '{print $2;}' |              \
+#  sed 's/+0+0//g') -i $DISPLAY+0,0 -qscale 0 -acodec pcm_s16le -vcodec  \
+#  libx264 -preset ultrafast -crf 0 -threads 0 -y sample.mkv
+
+
+ffmpeg  -hwaccel vaapi -vaapi_device /dev/dri/renderD128  -f pulse -ac 2 \
+  -i default -f x11grab  -r 29.97 -s                                     \
+  $(xwininfo -root | grep 'geometry' | awk '{print $2;}' |               \
+  sed 's/+0+0//g') -i $DISPLAY+0,0 -vf 'format=nv12|vaapi,hwupload' -c:v \
+  hevc_vaapi -preset slow -crf 25 -c:a libopus -threads 4 -y sample.mkv
